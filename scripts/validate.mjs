@@ -12,13 +12,13 @@ const STAGES = ["investigating", "identified", "restoring", "monitoring", "resol
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?Z$/;
 
-function exactKeys(value, keys, where) {
+function exactKeys(value, keys, where, optional = []) {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     fail(`${where} must be an object`);
     return false;
   }
   for (const key of Object.keys(value)) {
-    if (!keys.includes(key)) fail(`${where} has unknown field "${key}"`);
+    if (!keys.includes(key) && !optional.includes(key)) fail(`${where} has unknown field "${key}"`);
   }
   for (const key of keys) {
     if (!(key in value)) fail(`${where} is missing "${key}"`);
@@ -63,11 +63,12 @@ if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents",
   const componentIds = new Set();
   list(doc.components, "components").forEach((c, i) => {
     const where = `components[${i}]`;
-    if (!exactKeys(c, ["id", "name", "state", "monitoring", "checked_at", "coverage_note"], where)) return;
+    if (!exactKeys(c, ["id", "name", "state", "monitoring", "checked_at", "coverage_note"], where, ["description"])) return;
     if (!ID.test(c.id ?? "")) fail(`${where}.id must be lowercase words joined by hyphens`);
     if (componentIds.has(c.id)) fail(`${where}.id "${c.id}" is used twice`);
     componentIds.add(c.id);
     text(c.name, `${where}.name`, { max: 60 });
+    if ("description" in c) text(c.description, `${where}.description`, { max: 120, nullable: true });
     if (!STATES.includes(c.state)) fail(`${where}.state must be one of ${STATES.join(", ")}`);
     if (!MONITORING.includes(c.monitoring)) fail(`${where}.monitoring must be one of ${MONITORING.join(", ")}`);
     time(c.checked_at, `${where}.checked_at`, { nullable: true });

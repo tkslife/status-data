@@ -1,10 +1,11 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-23T22:15:00Z",
+  "generated_at": "2026-10-23T23:05:00Z",
   "components": [
     {
       "id": "sign-in",
       "name": "Signing in",
+      "description": "Getting into your TKS Life account",
       "state": "operational",
       "monitoring": "unmonitored",
       "checked_at": null,
@@ -13,6 +14,7 @@
     {
       "id": "braindates",
       "name": "Braindates",
+      "description": "Finding people and booking conversations",
       "state": "operational",
       "monitoring": "unmonitored",
       "checked_at": null,
@@ -21,6 +23,7 @@
     {
       "id": "explore-lessons",
       "name": "Explore and lessons",
+      "description": "Opening modules, lessons and learning resources",
       "state": "operational",
       "monitoring": "unmonitored",
       "checked_at": null,
@@ -29,6 +32,7 @@
     {
       "id": "projects-focus",
       "name": "Projects and Focus",
+      "description": "Working on projects and sharing your progress",
       "state": "operational",
       "monitoring": "unmonitored",
       "checked_at": null,
@@ -37,6 +41,7 @@
     {
       "id": "notifications",
       "name": "Notifications",
+      "description": "Getting updates and reminders",
       "state": "operational",
       "monitoring": "unmonitored",
       "checked_at": null,
@@ -45,6 +50,7 @@
     {
       "id": "ai-features",
       "name": "Activate Coach and AI features",
+      "description": "Getting help from Activate Coach and AI suggestions on your profile",
       "state": "operational",
       "monitoring": "unmonitored",
       "checked_at": null,

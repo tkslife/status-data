@@ -20,13 +20,14 @@ The format follows the public allowlist in the [status data contract](https://gi
 
 | Field | Values |
 |---|---|
+| `components[].description` | Optional one-line explanation under the feature name, up to 120 characters |
 | `components[].state` | `operational` (shown as "No known issues"), `degraded`, `outage`, `maintenance`, `unknown` |
 | `components[].monitoring` | `unmonitored` for now: the team sets states by hand |
 | `incidents[].stage` and `updates[].stage` | `investigating`, `identified`, `restoring`, `monitoring`, `resolved` |
 | `incidents[].resolved_at` | `null` until resolved; set exactly when `stage` is `resolved` |
 | `maintenance[]` | Planned windows with `starts_at`, `ends_at` and `impact`; a future window does not change a component's state |
 
-Version 1 adds a short `title` to incidents and maintenance windows and a `stage` to each incident update, so each update shows where things stood at the time.
+Version 1 adds a one-line component `description`, a short `title` to incidents and maintenance windows and a `stage` to each incident update, so each update shows where things stood at the time.
 
 Never put student names or details, staff contact details, links, internal hostnames, provider or account names, error messages, logs or credentials in this file. The checker rejects links and email addresses, but it cannot judge everything, so read the text before committing.
 
