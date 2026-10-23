@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-23T22:15:00Z",
+  "components": [
+    {
+      "id": "sign-in",
+      "name": "Signing in",
+      "state": "operational",
+      "monitoring": "unmonitored",
+      "checked_at": null,
+      "coverage_note": "Updated by the TKS team, not by automatic monitoring."
+    },
+    {
+      "id": "braindates",
+      "name": "Braindates",
+      "state": "operational",
+      "monitoring": "unmonitored",
+      "checked_at": null,
+      "coverage_note": "Updated by the TKS team, not by automatic monitoring."
+    },
+    {
+      "id": "explore-lessons",
+      "name": "Explore and lessons",
+      "state": "operational",
+      "monitoring": "unmonitored",
+      "checked_at": null,
+      "coverage_note": "Updated by the TKS team, not by automatic monitoring."
+    },
+    {
+      "id": "projects-focus",
+      "name": "Projects and Focus",
+      "state": "operational",
+      "monitoring": "unmonitored",
+      "checked_at": null,
+      "coverage_note": "Updated by the TKS team, not by automatic monitoring."
+    },
+    {
+      "id": "notifications",
+      "name": "Notifications",
+      "state": "operational",
+      "monitoring": "unmonitored",
+      "checked_at": null,
+      "coverage_note": "Updated by the TKS team, not by automatic monitoring."
+    },
+    {
+      "id": "ai-features",
+      "name": "Activate Coach and AI features",
+      "state": "operational",
+      "monitoring": "unmonitored",
+      "checked_at": null,
+      "coverage_note": "Updated by the TKS team, not by automatic monitoring."
+    }
+  ],
+  "incidents": [],
+  "maintenance": []
+}
