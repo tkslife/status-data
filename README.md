@@ -16,13 +16,12 @@ Student and staff wording is reviewed by Lyn, and external or security wording b
 
 ## What can go in the file
 
-The format follows the public allowlist in the [status data contract](https://github.com/tkslife/tks-life-status/blob/main/docs/data-contract.md). `scripts/validate.mjs` rejects anything else.
+The format is a subset of the public allowlist in the [status data contract](https://github.com/tkslife/tks-life-status/blob/main/docs/data-contract.md), holding only what the page shows. `scripts/validate.mjs` rejects anything else.
 
 | Field | Values |
 |---|---|
 | `components[].description` | Optional one-line explanation under the feature name, up to 120 characters |
 | `components[].state` | `operational` (shown as "No known issues"), `degraded`, `outage`, `maintenance`, `unknown` |
-| `components[].monitoring` | `unmonitored` for now: the team sets states by hand |
 | `incidents[].stage` and `updates[].stage` | `investigating`, `identified`, `restoring`, `monitoring`, `resolved` |
 | `incidents[].resolved_at` | `null` until resolved; set exactly when `stage` is `resolved` |
 | `maintenance[]` | Planned windows with `starts_at`, `ends_at` and `impact`; a future window does not change a component's state |

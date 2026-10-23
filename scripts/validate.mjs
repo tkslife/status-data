@@ -7,7 +7,6 @@ const errors = [];
 const fail = (message) => errors.push(message);
 
 const STATES = ["operational", "degraded", "outage", "maintenance", "unknown"];
-const MONITORING = ["measured", "partial", "unmonitored", "stale"];
 const STAGES = ["investigating", "identified", "restoring", "monitoring", "resolved"];
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?Z$/;
@@ -63,16 +62,13 @@ if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents",
   const componentIds = new Set();
   list(doc.components, "components").forEach((c, i) => {
     const where = `components[${i}]`;
-    if (!exactKeys(c, ["id", "name", "state", "monitoring", "checked_at", "coverage_note"], where, ["description"])) return;
+    if (!exactKeys(c, ["id", "name", "state"], where, ["description"])) return;
     if (!ID.test(c.id ?? "")) fail(`${where}.id must be lowercase words joined by hyphens`);
     if (componentIds.has(c.id)) fail(`${where}.id "${c.id}" is used twice`);
     componentIds.add(c.id);
     text(c.name, `${where}.name`, { max: 60 });
     if ("description" in c) text(c.description, `${where}.description`, { max: 120, nullable: true });
     if (!STATES.includes(c.state)) fail(`${where}.state must be one of ${STATES.join(", ")}`);
-    if (!MONITORING.includes(c.monitoring)) fail(`${where}.monitoring must be one of ${MONITORING.join(", ")}`);
-    time(c.checked_at, `${where}.checked_at`, { nullable: true });
-    text(c.coverage_note, `${where}.coverage_note`, { max: 200 });
   });
   if (componentIds.size === 0) fail("components must list at least one component");
 
