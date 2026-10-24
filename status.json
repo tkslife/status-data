@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-23T23:40:00Z",
+  "generated_at": "2026-10-24T00:30:00Z",
   "components": [
     {
       "id": "sign-in",
@@ -40,5 +40,16 @@
     }
   ],
   "incidents": [],
-  "maintenance": []
+  "maintenance": [
+    {
+      "id": "2026-10-24-ai-model-update",
+      "title": "AI model update",
+      "component_ids": [
+        "ai-features"
+      ],
+      "starts_at": "2026-10-24T00:30:00Z",
+      "ends_at": "2026-10-25T01:00:00Z",
+      "impact": "We are updating the AI models behind Activate Coach and AI suggestions. These features stay available. If you see an error, try again in a few minutes."
+    }
+  ]
 }
