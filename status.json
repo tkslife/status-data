@@ -48,7 +48,7 @@
         "ai-features"
       ],
       "starts_at": "2026-10-24T00:30:00Z",
-      "ends_at": "2026-10-25T01:00:00Z",
+      "ends_at": "2026-10-26T01:00:00Z",
       "impact": "We are updating the AI models behind Activate Coach and AI suggestions. If something does not work as expected, please try again later."
     }
   ]
