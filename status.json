@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T00:24:00Z",
+  "generated_at": "2026-10-25T02:55:00Z",
   "components": [
     {
       "id": "sign-in",
@@ -49,7 +49,7 @@
       ],
       "starts_at": "2026-10-24T00:30:00Z",
       "ends_at": "2026-10-26T01:00:00Z",
-      "impact": "We are updating the AI models behind Activate Coach and AI suggestions. If something does not work as expected, please try again later."
+      "impact": "We are updating the AI models behind Activate Coach and AI suggestions. Update, 24 October: we've extended this to 25 October at 6 PM Pacific to finish testing. You can keep using these features. If something doesn't work, please try again later."
     }
   ]
 }
