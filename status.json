@@ -5,37 +5,37 @@
     {
       "id": "sign-in",
       "name": "Signing in",
-      "description": "Getting into your TKS Life account",
+      "description": "Account sign-in and access",
       "state": "operational"
     },
     {
       "id": "braindates",
       "name": "Braindates",
-      "description": "Finding people and booking conversations",
+      "description": "Braindate discovery and booking",
       "state": "operational"
     },
     {
       "id": "explore-lessons",
       "name": "Explore and lessons",
-      "description": "Opening modules, lessons and learning resources",
+      "description": "Access to modules, lessons and learning resources",
       "state": "operational"
     },
     {
       "id": "projects-focus",
       "name": "Projects and Focus",
-      "description": "Working on projects and sharing your progress",
+      "description": "Project work, Focus activities and progress updates",
       "state": "operational"
     },
     {
       "id": "notifications",
       "name": "Notifications",
-      "description": "Getting updates and reminders",
+      "description": "Delivery of notifications and reminders",
       "state": "operational"
     },
     {
       "id": "ai-features",
       "name": "Activate Coach and AI features",
-      "description": "Getting help from Activate Coach and AI suggestions on your profile",
+      "description": "Activate Coach responses and AI-assisted profile suggestions",
       "state": "operational"
     }
   ],
