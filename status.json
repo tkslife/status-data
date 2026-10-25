@@ -52,7 +52,7 @@
           "published_at": "2026-10-25T08:15:31Z",
           "stage": "resolved",
           "impact": "Activate Coach is responding normally again. We have also improved the message shown if the coach becomes unavailable.",
-          "workaround": "You can use Activate Coach again.",
+          "workaround": "",
           "next_update_at": null
         },
         {
