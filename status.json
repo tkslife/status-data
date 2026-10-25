@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T02:55:00Z",
+  "generated_at": "2026-10-25T04:49:11Z",
   "components": [
     {
       "id": "sign-in",
@@ -36,10 +36,27 @@
       "id": "ai-features",
       "name": "Activate Coach and AI features",
       "description": "Getting help from Activate Coach and AI suggestions on your profile",
-      "state": "operational"
+      "state": "outage"
     }
   ],
-  "incidents": [],
+  "incidents": [
+    {
+      "id": "2026-10-25-activate-coach-unavailable",
+      "title": "Activate Coach is unavailable",
+      "component_ids": ["ai-features"],
+      "stage": "investigating",
+      "updates": [
+        {
+          "published_at": "2026-10-25T04:49:11Z",
+          "stage": "investigating",
+          "impact": "Activate Coach cannot reply to messages. We are investigating and checking the other AI features.",
+          "workaround": "Please pause using the coach and check this page for updates.",
+          "next_update_at": null
+        }
+      ],
+      "resolved_at": null
+    }
+  ],
   "maintenance": [
     {
       "id": "2026-10-24-ai-model-update",
@@ -49,7 +66,7 @@
       ],
       "starts_at": "2026-10-24T00:30:00Z",
       "ends_at": "2026-10-26T01:00:00Z",
-      "impact": "We are updating the AI models behind Activate Coach and AI suggestions. Update, 24 October: we've extended this to 25 October at 6 PM Pacific to finish testing. You can keep using these features. If something doesn't work, please try again later."
+      "impact": "AI updates remain in progress. Activate Coach is currently unavailable; see the incident above for the latest information."
     }
   ]
 }
