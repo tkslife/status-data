@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T07:20:31Z",
+  "generated_at": "2026-10-25T08:15:31Z",
   "components": [
     {
       "id": "sign-in",
@@ -60,12 +60,19 @@
     },
     {
       "id": "2026-10-25-activate-coach-unavailable",
-      "title": "Activate Coach recovery",
+      "title": "Activate Coach restored",
       "component_ids": [
         "ai-features"
       ],
-      "stage": "monitoring",
+      "stage": "resolved",
       "updates": [
+        {
+          "published_at": "2026-10-25T08:15:31Z",
+          "stage": "resolved",
+          "impact": "Activate Coach is responding normally again. We have also improved the message shown if the coach becomes unavailable.",
+          "workaround": "You can use Activate Coach again.",
+          "next_update_at": null
+        },
         {
           "published_at": "2026-10-25T07:20:31Z",
           "stage": "monitoring",
@@ -81,7 +88,7 @@
           "next_update_at": null
         }
       ],
-      "resolved_at": null
+      "resolved_at": "2026-10-25T08:15:31Z"
     }
   ],
   "maintenance": []
