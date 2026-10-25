@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-25T08:15:31Z",
+  "generated_at": "2026-10-25T08:37:01Z",
   "components": [
     {
       "id": "sign-in",
@@ -36,28 +36,10 @@
       "id": "ai-features",
       "name": "Activate Coach and AI features",
       "description": "Getting help from Activate Coach and AI suggestions on your profile",
-      "state": "degraded"
+      "state": "operational"
     }
   ],
   "incidents": [
-    {
-      "id": "2026-10-25-spotify-profile-analysis",
-      "title": "Spotify profile analysis under review",
-      "component_ids": [
-        "ai-features"
-      ],
-      "stage": "investigating",
-      "updates": [
-        {
-          "published_at": "2026-10-25T07:20:31Z",
-          "stage": "investigating",
-          "impact": "We are investigating Spotify-connected profile analysis and checking its results.",
-          "workaround": "If your Spotify analysis looks incomplete, please try again later.",
-          "next_update_at": null
-        }
-      ],
-      "resolved_at": null
-    },
     {
       "id": "2026-10-25-activate-coach-unavailable",
       "title": "Activate Coach restored",
