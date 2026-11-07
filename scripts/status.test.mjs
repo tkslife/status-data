@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { build } from "esbuild";
 
 const compiled = await build({ entryPoints: ["site/status-document.ts"], bundle: true, write: false, format: "esm" });
-const { parseStatusDocument, overallStatus, fetchStatusDocument, statusHistory, recentlyResolved } = await import(
+const { parseStatusDocument, overallStatus, fetchStatusDocument, statusHistory, recentlyResolved, formatStatusTime, formatHistoryDate } = await import(
   `data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString("base64")}`
 );
 const raw = JSON.parse(await readFile("status.json", "utf8"));
@@ -52,13 +52,13 @@ test("the publishing validator rejects invalid and private fields before publica
 
 const incident = (overrides = {}) => ({
   id: "synthetic", title: "Synthetic incident", component_ids: [raw.components[0].id],
-  stage: "resolved", resolved_at: "2026-11-06T00:00:00Z", severity: "outage",
-  updates: [{ stage: "investigating", published_at: "2026-11-05T23:30:00Z", impact: "Synthetic impact.", workaround: null, next_update_at: null }],
+  stage: "resolved", resolved_at: "2026-11-06T07:00:00Z", severity: "outage",
+  updates: [{ stage: "investigating", published_at: "2026-11-06T06:30:00Z", impact: "Synthetic impact.", workaround: null, next_update_at: null }],
   ...overrides,
 });
-const historyDoc = (overrides = {}) => parseStatusDocument({ ...raw, history_started_at: "2026-11-01T00:00:00Z", incidents: [], ...overrides });
+const historyDoc = (overrides = {}) => parseStatusDocument({ ...raw, history_started_at: "2026-11-01T07:00:00Z", incidents: [], ...overrides });
 
-test("90 UTC days preserve missing coverage and midnight incident boundaries", () => {
+test("90 PCT days preserve missing coverage and midnight incident boundaries", () => {
   const days = statusHistory(historyDoc({ incidents: [incident()] }), new Date("2026-11-07T01:00:00-08:00"));
   assert.equal(days.length, 90);
   assert.equal(days.at(-1).date, "2026-11-07");
@@ -87,13 +87,13 @@ test("future events stay absent and partial first-day reporting is explicit", ()
 
 test("outages outrank maintenance and recent incident retention uses calendar days", () => {
   const now = new Date("2026-11-07T12:00:00Z");
-  const doc = historyDoc({ incidents: [incident()], maintenance: [{ id: "planned", title: "Synthetic maintenance", component_ids: [raw.components[0].id], starts_at: "2026-11-05T00:00:00Z", ends_at: "2026-11-07T00:00:00Z", impact: "Synthetic impact." }] });
+  const doc = historyDoc({ incidents: [incident()], maintenance: [{ id: "planned", title: "Synthetic maintenance", component_ids: [raw.components[0].id], starts_at: "2026-11-05T07:00:00Z", ends_at: "2026-11-07T07:00:00Z", impact: "Synthetic impact." }] });
   const days = statusHistory(doc, now);
   assert.equal(days.find(day => day.date === "2026-11-05").state, "outage");
   assert.equal(days.find(day => day.date === "2026-11-06").state, "maintenance");
   assert.equal(days.at(-1).state, "operational");
   assert.equal(recentlyResolved(doc, now).length, 1);
-  assert.equal(recentlyResolved(doc, new Date("2027-02-04T00:00:00Z")).length, 0);
+  assert.equal(recentlyResolved(doc, new Date("2027-02-04T07:00:00Z")).length, 0);
 });
 
 test("invalid historical severity and resolution order cannot be published", async () => {
@@ -109,4 +109,37 @@ test("invalid historical severity and resolution order cannot be published", asy
       assert.equal(spawnSync(process.execPath, ["scripts/validate.mjs", file]).status, 1);
     }
   } finally { await rm(dir, { recursive: true }); }
+});
+
+test("PCT today changes at 07:00Z and midnight resolution does not colour the next day", () => {
+  const doc = historyDoc({ incidents: [incident({
+    resolved_at: "2026-11-07T07:00:00Z",
+    updates: [{ stage: "investigating", published_at: "2026-11-07T06:30:00Z", impact: "Synthetic impact.", workaround: null, next_update_at: null }],
+  })], maintenance: [{ id: "planned", title: "Synthetic maintenance", component_ids: [raw.components[0].id], starts_at: "2026-11-07T06:00:00Z", ends_at: "2026-11-07T07:00:00Z", impact: "Synthetic impact." }] });
+  assert.equal(statusHistory(doc, new Date("2026-11-07T06:59:59Z")).at(-1).date, "2026-11-06");
+  const days = statusHistory(doc, new Date("2026-11-07T07:00:00Z"));
+  assert.equal(days.at(-1).date, "2026-11-07");
+  assert.equal(days.at(-2).state, "outage");
+  assert.equal(days.at(-2).maintenance.length, 1);
+  assert.equal(days.at(-1).state, "operational");
+});
+
+test("resolved-incident retention uses the same 90 PCT dates as the timeline", () => {
+  const record = resolved_at => incident({ id: resolved_at,
+    resolved_at, updates: [{ stage: "investigating", published_at: "2026-08-08T07:00:00Z", impact: "Synthetic impact.", workaround: null, next_update_at: null }],
+  });
+  const doc = historyDoc({ incidents: [record("2026-08-09T07:00:00Z"), record("2026-08-09T06:59:59Z")] });
+  const now = new Date("2026-11-07T06:59:59Z");
+  assert.equal(statusHistory(doc, now)[0].date, "2026-08-09");
+  assert.deepEqual(recentlyResolved(doc, now).map(item => item.resolvedAt), ["2026-08-09T07:00:00Z"]);
+});
+
+test("displayed times use Vancouver PCT and calendar date keys do not shift a day", () => {
+  const value = formatStatusTime("2026-11-07T00:59:52Z", "en-CA");
+  assert.match(value, /Nov 6, 2026/);
+  assert.match(value, /5:59/);
+  assert.match(value, / PCT$/);
+  assert.doesNotMatch(value, /UTC|PST|PDT/);
+  assert.equal(formatHistoryDate("2026-11-07"), formatHistoryDate("2026-11-07T19:00:00Z"));
+  assert.notEqual(formatHistoryDate("2026-11-07"), formatHistoryDate("2026-11-07T00:59:52Z"));
 });

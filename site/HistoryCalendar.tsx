@@ -1,13 +1,13 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { formatHistoryDate } from "./status-document";
+import { formatHistoryDate, STATUS_TIME_ZONE } from "./status-document";
 
 const dayMs = 86_400_000;
 const iso = (date: Date) => date.toISOString().slice(0, 10);
 const monthOf = (date: string) => date.slice(0, 7);
-const monthLabel = (month: string) => new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${month}-01`));
+const monthLabel = (month: string) => new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric", timeZone: STATUS_TIME_ZONE }).format(new Date(`${month}-01T12:00:00-07:00`));
 
-/** A bounded UTC calendar; dates match the history bars in every time zone. */
+/** A bounded PCT calendar; date-only arithmetic is independent of the viewer's zone. */
 export default function HistoryCalendar({ value, min, max, onChange }: {
   value: string; min: string; max: string; onChange: (date: string) => void;
 }) {
@@ -64,7 +64,7 @@ export default function HistoryCalendar({ value, min, max, onChange }: {
     onBlur={event => { if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false); }}
     onKeyDown={event => { if (event.key === "Escape" && open) { event.preventDefault(); event.stopPropagation(); close(); } }}>
     <button ref={trigger} type="button" aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? id : undefined}
-      aria-label={`Choose history date, ${formatHistoryDate(value)} UTC`}
+      aria-label={`Choose history date, ${formatHistoryDate(value)} PCT`}
       onClick={() => {
         if (open) { close(); return; }
         setMonth(monthOf(value)); setFocused(value); setOpen(true); focusDay(value);
@@ -99,7 +99,7 @@ export default function HistoryCalendar({ value, min, max, onChange }: {
         </td>)}</tr>)}</tbody>
       </table>
       <button type="button" className="mt-2 min-h-11 w-full rounded-md border text-sm hover:bg-muted focus-visible:outline focus-visible:outline-2" onClick={() => choose(max)}>Today</button>
-      <p className="mt-2 text-center text-xs text-gray-600">Last 90 days · UTC</p>
+      <p className="mt-2 text-center text-xs text-gray-600">Last 90 days · PCT</p>
     </div>}
   </div>;
 }

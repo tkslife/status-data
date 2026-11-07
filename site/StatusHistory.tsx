@@ -34,7 +34,7 @@ export default function StatusHistory({ doc, now, onIncident }: {
 
   return <div className="mt-4 min-w-0 rounded-lg border p-4 sm:p-6">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-gray-600">Last 90 days · UTC</p>
+      <p className="text-sm text-gray-600">Last 90 days · PCT</p>
       <div className="flex w-full items-center gap-2 sm:w-auto sm:self-start">
         <button type="button" className={control} aria-label="Previous day" disabled={selectedIndex === 0} onClick={() => move(-1)}><ChevronLeft size={18} aria-hidden="true" /></button>
         <HistoryCalendar min={days[0].date} max={days[days.length - 1].date} value={selected.date} onChange={setSelectedDate} />
@@ -48,7 +48,7 @@ export default function StatusHistory({ doc, now, onIncident }: {
       </svg>
       <div className="grid" style={{ gridTemplateColumns: "repeat(90, minmax(0, 1fr))" }} role="group" aria-label="Daily reported status. Use arrow keys or the calendar to choose a day.">
         {days.map((day, position) => <button type="button" key={day.date} data-day={day.date}
-          aria-label={`${formatHistoryDate(day.date)} UTC: ${historyLabels[day.state]}`}
+          aria-label={`${formatHistoryDate(day.date)} PCT: ${historyLabels[day.state]}`}
           aria-pressed={day === selected} tabIndex={day === selected ? 0 : -1}
           title={`${formatHistoryDate(day.date)}: ${historyLabels[day.state]}`}
           onClick={() => setSelectedDate(day.date)}
@@ -71,7 +71,7 @@ export default function StatusHistory({ doc, now, onIncident }: {
       {(Object.keys(colours) as ComponentState[]).map(state => <li key={state} className="inline-flex items-center gap-1.5"><span aria-hidden="true" className={`h-2.5 w-2.5 rounded-sm ${colours[state].background}`} />{historyLabels[state]}</li>)}
     </ul>
     <div className="mt-5 border-t pt-4" aria-live="polite" aria-atomic="true">
-      <h3 className="font-medium">{formatHistoryDate(selected.date)} <span className="text-sm text-gray-600">UTC</span></h3>
+      <h3 className="font-medium">{formatHistoryDate(selected.date)} <span className="text-sm text-gray-600">PCT</span></h3>
       <p className="mt-1 text-sm text-gray-600">{historyLabels[selected.state]}.</p>
       {selected.coverage === "partial" && <p className="mt-1 text-sm text-gray-600">Tracking began partway through this date; earlier activity may be incomplete.</p>}
       {selected.coverage === "none" && (selected.incidents.length > 0 || selected.maintenance.length > 0) && <p className="mt-1 text-sm text-gray-600">These events are recorded; other activity on this date is not.</p>}

@@ -11,7 +11,7 @@ Production `/status` redirects to the independent domain. Older, already-open ap
 3. Commit to `main`. The **Check status file** action validates, tests, builds and publishes the complete site to GitHub Pages. Deployment and CDN propagation take time; verify the live data before announcing an update.
 4. Check that validation and publication passed. Invalid data blocks publication, leaving the last valid Pages site available. Fix the source promptly; legacy `/status` clients read the raw file directly and can show a load error until it is corrected.
 
-Student and staff wording is reviewed by Lyn, and external or security wording by Andre, under the [status notices SOP](https://github.com/tkslife/tks-life-status/blob/main/docs/status-and-maintenance-sop.md). Use its copy templates. Store all times in UTC. Incident updates show the reader's local time; daily history consistently uses UTC.
+Student and staff wording is reviewed by Lyn, and external or security wording by Andre, under the [status notices SOP](https://github.com/tkslife/tks-life-status/blob/main/docs/status-and-maintenance-sop.md). Use its copy templates. Store all times in UTC. All displayed incident, maintenance, calendar and history dates use PCT (America/Vancouver, seven hours behind the source timestamps). The daily timeline changes dates at midnight PCT.
 
 ## What can go in the file
 
@@ -53,7 +53,7 @@ Never put student names or details, staff contact details, links, internal hostn
 }
 ```
 
-Add the newest update first. Retain resolved incidents and ended maintenance windows until they no longer overlap the last 90 UTC calendar days, including today. Never remove an open incident. Removing records early would erase their history. Git history preserves older records after they leave the public window.
+Add the newest update first. Retain resolved incidents and ended maintenance windows until they no longer overlap the last 90 PCT calendar days, including today. Never remove an open incident. Removing records early would erase their history. Git history preserves older records after they leave the public window.
 
 The daily timeline is calculated from these records in the browser, without a database, collector or daily job. An incident spans its earliest update until `resolved_at`, excluding the resolution instant. A resolution exactly at midnight does not colour the next day. Red means an outage was reported, orange means another incident was reported, blue means maintenance and green means no incidents were reported during tracking. These are reported events, not measured uptime. Before tracking began, dates without records remain grey; legacy incidents without severity are explicitly labelled. Keep `history_started_at` unchanged on routine updates and advance `generated_at` when publishing changes.
 
