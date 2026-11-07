@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-07T03:38:31Z",
+  "generated_at": "2026-11-07T03:54:25Z",
   "history_started_at": "2026-11-07T01:55:00Z",
   "components": [
     {
       "id": "sign-in",
       "name": "Signing in",
       "description": "Account sign-in and access",
-      "state": "operational"
+      "state": "degraded"
     },
     {
       "id": "braindates",
@@ -40,7 +40,28 @@
       "state": "operational"
     }
   ],
-  "incidents": [],
+  "incidents": [
+    {
+      "id": "dev-banner-check",
+      "title": "Dev banner verification",
+      "component_ids": [
+        "sign-in"
+      ],
+      "stage": "investigating",
+      "severity": "degraded",
+      "updates": [
+        {
+          "published_at": "2026-11-07T03:54:25Z",
+          "stage": "investigating",
+          "impact": "Dev verification: sign-in is responding slowly.",
+          "workaround": null,
+          "next_update_at": null
+        }
+      ],
+      "resolved_at": null,
+      "current_severity": "degraded"
+    }
+  ],
   "maintenance": [],
   "notice": {
     "id": "dev-controls-check",
