@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ComponentState, StatusDocument, formatHistoryDate, historyLabels, statusHistory } from "./status-document";
+import HistoryCalendar from "./HistoryCalendar";
 
 const colours: Record<ComponentState, string> = {
   operational: "bg-green-600",
@@ -23,19 +24,19 @@ export default function StatusHistory({ doc, now, onIncident }: {
   const move = (offset: number) => setSelectedDate(days[Math.max(0, Math.min(days.length - 1, selectedIndex + offset))].date);
   const control = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border px-2 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-40";
 
-  return <div className="mt-4 rounded-lg border p-6">
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-gray-600">Reported incidents · Last 90 days · UTC</p>
-      <div className="flex items-center gap-2">
+  return <div className="mt-4 min-w-0 rounded-lg border p-4 sm:p-6">
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-gray-600">Last 90 days · UTC</p>
+        <button type="button" className="min-h-11 text-sm underline underline-offset-2 disabled:text-gray-600 disabled:no-underline focus-visible:outline focus-visible:outline-2" disabled={selectedIndex === days.length - 1} onClick={() => setSelectedDate(days[days.length - 1].date)}>Today</button>
+      </div>
+      <div className="flex w-full items-center gap-2 sm:w-auto sm:self-start">
         <button type="button" className={control} aria-label="Previous day" disabled={selectedIndex === 0} onClick={() => move(-1)}><ChevronLeft size={18} aria-hidden="true" /></button>
-        <label className="sr-only" htmlFor="history-date">View status for a date</label>
-        <input id="history-date" type="date" min={days[0].date} max={days[days.length - 1].date} value={selected.date}
-          onChange={event => { if (days.some(day => day.date === event.target.value)) setSelectedDate(event.target.value); }}
-          className="min-h-11 min-w-0 rounded-md border bg-background px-2 text-sm text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" />
+        <HistoryCalendar min={days[0].date} max={days[days.length - 1].date} value={selected.date} onChange={setSelectedDate} />
         <button type="button" className={control} aria-label="Next day" disabled={selectedIndex === days.length - 1} onClick={() => move(1)}><ChevronRight size={18} aria-hidden="true" /></button>
       </div>
     </div>
-    <div className="mt-4 grid gap-px" style={{ gridTemplateColumns: "repeat(90, minmax(0, 1fr))" }} role="group" aria-label="Daily reported status. Use arrow keys or the date field to choose a day.">
+    <div className="mt-5 grid gap-px" style={{ gridTemplateColumns: "repeat(90, minmax(0, 1fr))" }} role="group" aria-label="Daily reported status. Use arrow keys or the calendar to choose a day.">
       {days.map((day, position) => <button type="button" key={day.date} data-day={day.date}
         aria-label={`${formatHistoryDate(day.date)} UTC: ${historyLabels[day.state]}`}
         aria-pressed={day === selected} tabIndex={day === selected ? 0 : -1}
@@ -48,10 +49,13 @@ export default function StatusHistory({ doc, now, onIncident }: {
           setSelectedDate(days[next].date);
           (event.currentTarget.parentElement?.children[next] as HTMLElement)?.focus();
         }}
-        className={`h-8 min-w-0 rounded-sm ${colours[day.state]} ${day === selected ? "ring-2 ring-foreground ring-offset-2" : ""} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2`} />)}
+        className="group flex min-w-0 flex-col items-stretch pb-1 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-1">
+        <span aria-hidden="true" className={`h-8 rounded-sm ${colours[day.state]} group-hover:opacity-70`} />
+        <span aria-hidden="true" className={`mt-1 h-1 rounded-sm ${day === selected ? "bg-foreground" : "bg-transparent"}`} />
+      </button>)}
     </div>
     <div className="mt-2 flex justify-between text-xs text-gray-600"><span>{formatHistoryDate(days[0].date)}</span><span>Today</span></div>
-    <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-600" aria-label="History legend">
+    <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600 sm:flex sm:flex-wrap" aria-label="History legend">
       {(Object.keys(colours) as ComponentState[]).map(state => <li key={state} className="inline-flex items-center gap-1.5"><span aria-hidden="true" className={`h-2.5 w-2.5 rounded-sm ${colours[state]}`} />{historyLabels[state]}</li>)}
     </ul>
     <div className="mt-5 border-t pt-4" aria-live="polite" aria-atomic="true">
@@ -65,6 +69,6 @@ export default function StatusHistory({ doc, now, onIncident }: {
       </li>)}</ul>}
       {selected.maintenance.map(window => <p key={window.id} className="mt-2 text-sm">{window.title}: {window.impact}</p>)}
     </div>
-    {doc.historyStartedAt && <p className="mt-4 text-xs text-gray-600">Incident tracking began {formatHistoryDate(doc.historyStartedAt)}. Earlier days without incident records are shown in grey.</p>}
+    {doc.historyStartedAt && <p className="mt-4 text-xs text-gray-600">Tracking since {formatHistoryDate(doc.historyStartedAt)}. Grey days have no records.</p>}
   </div>;
 }
