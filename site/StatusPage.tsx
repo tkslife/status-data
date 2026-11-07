@@ -1,5 +1,4 @@
 import React, {
-  ReactNode,
   useCallback,
   useEffect,
   useRef,
@@ -14,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import styles from "./status.module.css";
+import StatusHistory from "./StatusHistory";
 import {
   ComponentState,
   OverallStatus,
@@ -103,6 +103,7 @@ function IncidentCard({
   return (
     <li
       id={`incident-${incident.id}`}
+      tabIndex={-1}
       className="scroll-mt-6 rounded-lg border p-6"
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -148,11 +149,7 @@ function IncidentCard({
   );
 }
 
-type PageWithLayout = React.FC & {
-  getLayout?: (page: ReactNode) => ReactNode;
-};
-
-const StatusPage: PageWithLayout = () => {
+const StatusPage = () => {
   const [doc, setDoc] = useState<StatusDocument | null>(null);
   const [failed, setFailed] = useState(false);
   const [refreshFailed, setRefreshFailed] = useState(false);
@@ -160,6 +157,7 @@ const StatusPage: PageWithLayout = () => {
   const [checkedAt, setCheckedAt] = useState<Date | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [announcement, setAnnouncement] = useState("");
+  const [expandedIncident, setExpandedIncident] = useState<string | null>(null);
   const hasDoc = useRef(false);
   const inFlight = useRef(false);
   const nextManualAt = useRef(0);
@@ -221,21 +219,25 @@ const StatusPage: PageWithLayout = () => {
   }, []);
 
   useEffect(() => {
-    load();
-    const refresh = window.setInterval(() => load(), REFRESH_MS);
-    // Keeps the last successful check's age current between refreshes.
-    const tick = window.setInterval(() => setNow(new Date()), 30 * 1000);
+    const refreshVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      setNow(new Date());
+      load();
+    };
+    refreshVisible();
+    const refresh = window.setInterval(refreshVisible, REFRESH_MS);
+    document.addEventListener("visibilitychange", refreshVisible);
     return () => {
       window.clearInterval(refresh);
-      window.clearInterval(tick);
+      document.removeEventListener("visibilitychange", refreshVisible);
     };
   }, [load]);
 
   const summary = doc ? summaries[overallStatus(doc)] : null;
   const SummaryIcon = summary ? stateStyles[summary.state].icon : null;
   const openIncidents = doc?.incidents.filter((i) => i.stage !== "resolved");
-  const resolved = doc ? recentlyResolved(doc) : [];
-  const maintenance = doc ? upcomingMaintenance(doc) : [];
+  const resolved = doc ? recentlyResolved(doc, now) : [];
+  const maintenance = doc ? upcomingMaintenance(doc, now) : [];
   const componentName = (id: string) =>
     doc?.components.find((component) => component.id === id)?.name ?? id;
 
@@ -399,7 +401,7 @@ const StatusPage: PageWithLayout = () => {
                   return (
                     <li
                       key={component.id}
-                      className="flex items-start justify-between gap-4 px-6 py-4"
+                      className="flex items-center justify-between gap-4 px-6 py-4"
                     >
                       <div>
                         <p className="text-foreground">{component.name}</p>
@@ -438,8 +440,17 @@ const StatusPage: PageWithLayout = () => {
                 id="recent-heading"
                 className="text-xl font-semibold text-foreground"
               >
-                Resolved incidents
+                Incident history
               </h2>
+              <StatusHistory doc={doc} now={now} onIncident={id => {
+                setExpandedIncident(id);
+                window.requestAnimationFrame(() => {
+                  const incident = document.getElementById(`incident-${id}`);
+                  incident?.focus({ preventScroll: true });
+                  incident?.scrollIntoView({ block: "nearest" });
+                });
+              }} />
+              <p className="mt-5 text-sm text-gray-600">Resolved incidents stay here for {RECENT_DAYS} days. Select an incident to read its updates.</p>
               {resolved.length === 0 ? (
                 <p className="mt-4 rounded-lg border p-6 text-gray-600">
                   No resolved incidents in the last {RECENT_DAYS} days.
@@ -447,11 +458,18 @@ const StatusPage: PageWithLayout = () => {
               ) : (
                 <ul className="mt-4 space-y-4">
                   {resolved.map((incident) => (
-                    <IncidentCard
-                      key={incident.id}
-                      incident={incident}
-                      componentName={componentName}
-                    />
+                    <li key={incident.id}>
+                      <details open={expandedIncident === incident.id} onToggle={event => {
+                        if (event.currentTarget.open) setExpandedIncident(incident.id);
+                        else setExpandedIncident(current => current === incident.id ? null : current);
+                      }} className="rounded-lg border">
+                        <summary className="cursor-pointer px-6 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                          <span className="ml-2 font-medium">{incident.title}</span>
+                          <span className="ml-2 text-sm text-gray-600">Resolved {formatStatusTime(incident.resolvedAt!)}</span>
+                        </summary>
+                        <ul className="px-4 pb-4"><IncidentCard incident={incident} componentName={componentName} /></ul>
+                      </details>
+                    </li>
                   ))}
                 </ul>
               )}
@@ -462,8 +480,6 @@ const StatusPage: PageWithLayout = () => {
     </>
   );
 };
-
-StatusPage.getLayout = (page: ReactNode) => page;
 
 export default StatusPage;
 
