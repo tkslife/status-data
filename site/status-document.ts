@@ -247,8 +247,13 @@ export function upcomingMaintenance(
 }
 
 export const RECENT_DAYS = 90;
+export const STATUS_TIME_ZONE = "America/Vancouver";
 
 const DAY_MS = 86_400_000;
+// PCT stays seven hours behind the source timestamps throughout the year.
+const PCT_OFFSET_MS = -7 * 60 * 60 * 1000;
+const pctDate = (time: number) => new Date(time + PCT_OFFSET_MS).toISOString().slice(0, 10);
+const pctDayStart = (date: Date) => Date.parse(`${pctDate(date.getTime())}T00:00:00-07:00`);
 export const historyLabels: Record<ComponentState, string> = {
   operational: "No incidents reported",
   degraded: "Incident reported",
@@ -265,9 +270,9 @@ export interface HistoryDay {
   coverage: "full" | "partial" | "none";
 }
 
-/** Reported incident history, not a measured uptime percentage. Dates use UTC. */
+/** Reported incident history, not a measured uptime percentage. Dates use PCT. */
 export function statusHistory(doc: StatusDocument, now = new Date()): HistoryDay[] {
-  const today = Date.parse(now.toISOString().slice(0, 10));
+  const today = pctDayStart(now);
   const tracking = doc.historyStartedAt ? Date.parse(doc.historyStartedAt) : Infinity;
   return Array.from({ length: RECENT_DAYS }, (_, index) => {
     const start = today - (RECENT_DAYS - 1 - index) * DAY_MS;
@@ -290,12 +295,13 @@ export function statusHistory(doc: StatusDocument, now = new Date()): HistoryDay
       else if ((state === "operational" || state === "unknown") && states.includes("maintenance")) state = "maintenance";
       else if (!incidents.length && !maintenance.length && states.includes("unknown")) state = "unknown";
     }
-    return { date: new Date(start).toISOString().slice(0, 10), state, incidents, maintenance, coverage };
+    return { date: pctDate(start), state, incidents, maintenance, coverage };
   });
 }
 
 export function formatHistoryDate(value: string): string {
-  return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(value));
+  const date = new Date(value.length === 10 ? `${value}T12:00:00-07:00` : value);
+  return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric", timeZone: STATUS_TIME_ZONE }).format(date);
 }
 
 /** Resolved incidents from the last RECENT_DAYS days, newest first. */
@@ -303,7 +309,7 @@ export function recentlyResolved(
   doc: StatusDocument,
   now: Date = new Date(),
 ): StatusIncident[] {
-  const since = Date.parse(now.toISOString().slice(0, 10)) - (RECENT_DAYS - 1) * DAY_MS;
+  const since = pctDayStart(now) - (RECENT_DAYS - 1) * DAY_MS;
   return doc.incidents
     .filter(
       (incident) =>
@@ -335,22 +341,20 @@ export function formatCheckedAgo(checkedAt: Date, now: Date): string {
   return `${hours} hour${hours === 1 ? "" : "s"} ago`;
 }
 
-/** Formats a UTC time in the reader's own time zone, with the zone shown. */
+/** Formats an instant in PCT, consistently for every reader. */
 export function formatStatusTime(
   value: string,
   locale?: string,
-  timeZone?: string,
 ): string {
-  // dateStyle/timeStyle cannot be combined with timeZoneName, so list fields.
+  // Use our PCT label rather than platform-dependent PDT/PST abbreviations.
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZoneName: "short",
-    timeZone,
-  }).format(new Date(value));
+    timeZone: STATUS_TIME_ZONE,
+  }).format(new Date(value)) + " PCT";
 }
 
 export async function fetchStatusDocument(
