@@ -1,7 +1,13 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ComponentState, StatusDocument, formatHistoryDate, historyLabels, statusHistory } from "./status-document";
 import HistoryCalendar from "./HistoryCalendar";
+
+// Match incident.io's uptime chart geometry; the SVG scales bars and gaps together.
+const BAR_WIDTH = 5;
+const BAR_HEIGHT = 16;
+const BAR_GAP = 2.34;
+const BAR_STEP = BAR_WIDTH + BAR_GAP;
 
 const colours: Record<ComponentState, { background: string; fill: string }> = {
   operational: { background: "bg-green-600", fill: "fill-green-600" },
@@ -17,34 +23,7 @@ export default function StatusHistory({ doc, now, onIncident }: {
   onIncident: (id: string) => void;
 }) {
   const days = statusHistory(doc, now);
-  const timelineRef = useRef<HTMLDivElement>(null);
-  const [barPixels, setBarPixels] = useState<{ width: number; positions: number[] } | null>(null);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
-
-  useLayoutEffect(() => {
-    const timeline = timelineRef.current;
-    if (!timeline) return;
-    const measure = () => {
-      const scale = window.devicePixelRatio || 1;
-      const left = timeline.getBoundingClientRect().left;
-      const cells = Array.from(timeline.querySelectorAll<HTMLButtonElement>("button[data-day]"), cell => cell.getBoundingClientRect());
-      if (!cells.length) return;
-      // Fractional grid tracks paint unevenly. Give every bar the same device-pixel width and align its edges.
-      const width = Math.max(1, Math.floor(Math.min(...cells.map(cell => cell.width)) * scale)) / scale;
-      const positions = cells.map(cell => Math.round(cell.left * scale) / scale - left);
-      setBarPixels(previous => previous?.width === width && previous.positions.every((position, index) => position === positions[index])
-        ? previous : { width, positions });
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(timeline);
-    observer.observe(document.documentElement);
-    window.addEventListener("resize", measure);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const index = Math.max(0, days.findIndex(day => day.date === selectedDate));
@@ -63,12 +42,11 @@ export default function StatusHistory({ doc, now, onIncident }: {
       </div>
     </div>
     <div className="relative mt-5">
-      {/* One SVG keeps fractional display scaling consistent across every bar. Buttons retain date selection and focus. */}
-      {barPixels && <svg aria-hidden="true" width="100%" height="32" shapeRendering="geometricPrecision" className="pointer-events-none absolute left-0 top-0 overflow-visible">
-        {days.map((day, position) => <rect key={day.date} x={barPixels.positions[position]} width={barPixels.width} height="32" rx="2"
+      <svg aria-hidden="true" width="100%" height={BAR_HEIGHT} viewBox={`0 0 ${days.length * BAR_STEP} ${BAR_HEIGHT}`} preserveAspectRatio="none" className="pointer-events-none absolute left-0 top-0">
+        {days.map((day, position) => <rect key={day.date} x={position * BAR_STEP} width={BAR_WIDTH} height={BAR_HEIGHT} rx="1"
           className={colours[day.state].fill} opacity={hoveredDate === day.date ? 0.7 : 1} />)}
-      </svg>}
-      <div ref={timelineRef} className="grid gap-px" style={{ gridTemplateColumns: "repeat(90, minmax(0, 1fr))" }} role="group" aria-label="Daily reported status. Use arrow keys or the calendar to choose a day.">
+      </svg>
+      <div className="grid" style={{ gridTemplateColumns: "repeat(90, minmax(0, 1fr))" }} role="group" aria-label="Daily reported status. Use arrow keys or the calendar to choose a day.">
         {days.map((day, position) => <button type="button" key={day.date} data-day={day.date}
           aria-label={`${formatHistoryDate(day.date)} UTC: ${historyLabels[day.state]}`}
           aria-pressed={day === selected} tabIndex={day === selected ? 0 : -1}
@@ -83,8 +61,8 @@ export default function StatusHistory({ doc, now, onIncident }: {
             (event.currentTarget.parentElement?.children[next] as HTMLElement)?.focus();
           }}
           className="flex min-w-0 flex-col items-stretch pb-1 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-1">
-          <span aria-hidden="true" className="h-8" />
-          <span aria-hidden="true" className={`mt-1 h-1 rounded-sm ${day === selected ? "bg-foreground" : "bg-transparent"}`} />
+          <span aria-hidden="true" className="h-4" />
+          <span aria-hidden="true" style={{ width: `${BAR_WIDTH / BAR_STEP * 100}%` }} className={`mt-1 h-1 rounded-sm ${day === selected ? "bg-foreground" : "bg-transparent"}`} />
         </button>)}
       </div>
     </div>
