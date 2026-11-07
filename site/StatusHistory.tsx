@@ -3,9 +3,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ComponentState, StatusDocument, formatHistoryDate, historyLabels, statusHistory } from "./status-document";
 import HistoryCalendar from "./HistoryCalendar";
 
-// Match incident.io's uptime chart geometry; the SVG scales bars and gaps together.
+// Use incident.io's horizontal proportions; the SVG scales bar widths and gaps together.
 const BAR_WIDTH = 5;
-const BAR_HEIGHT = 16;
+const BAR_HEIGHT = 24;
 const BAR_GAP = 2.34;
 const BAR_STEP = BAR_WIDTH + BAR_GAP;
 
@@ -61,7 +61,7 @@ export default function StatusHistory({ doc, now, onIncident }: {
             (event.currentTarget.parentElement?.children[next] as HTMLElement)?.focus();
           }}
           className="flex min-w-0 flex-col items-stretch pb-1 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-1">
-          <span aria-hidden="true" className="h-4" />
+          <span aria-hidden="true" className="h-6" />
           <span aria-hidden="true" style={{ width: `${BAR_WIDTH / BAR_STEP * 100}%` }} className={`mt-1 h-1 rounded-sm ${day === selected ? "bg-foreground" : "bg-transparent"}`} />
         </button>)}
       </div>
