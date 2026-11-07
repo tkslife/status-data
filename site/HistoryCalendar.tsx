@@ -72,7 +72,7 @@ export default function HistoryCalendar({ value, min, max, onChange }: {
       className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border bg-background px-3 text-sm hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
       <CalendarDays size={16} aria-hidden="true" /><span>{formatHistoryDate(value)}</span><ChevronDown size={14} aria-hidden="true" />
     </button>
-    {open && <div ref={panel} id={id} role="dialog" aria-label="Choose history date" style={{ maxHeight: placement.maxHeight }} className={`absolute left-1/2 z-20 w-64 -translate-x-1/2 overflow-y-auto rounded-lg border bg-background p-3 shadow-md sm:left-0 sm:translate-x-0 ${placement.above ? "bottom-full mb-2" : "top-full mt-2"}`}>
+    {open && <div ref={panel} id={id} role="dialog" aria-label="Choose history date" style={{ maxHeight: placement.maxHeight }} className={`absolute left-1/2 z-20 w-64 -translate-x-1/2 overflow-y-auto rounded-lg border bg-background p-3 shadow-md sm:left-auto sm:right-0 sm:translate-x-0 ${placement.above ? "bottom-full mb-2" : "top-full mt-2"}`}>
       <div className="mb-2 flex items-center justify-between gap-1">
         <button type="button" className={nav} aria-label="Previous month" disabled={month <= monthOf(min)} onClick={() => changeMonth(-1)}><ChevronLeft size={16} aria-hidden="true" /></button>
         <p className="text-sm font-medium" aria-live="polite">{monthLabel(month)}</p>
