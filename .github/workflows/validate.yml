@@ -3,6 +3,11 @@ name: Check status file
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: status-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -10,7 +15,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -18,4 +23,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/validate.mjs status.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/
+
+  publish:
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Verify this is still the current main revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          current=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
+          test "$current" = "$GITHUB_SHA"
+      - name: Deploy validated static site
+        id: deployment
+        uses: actions/deploy-pages@v4

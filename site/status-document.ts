@@ -1,0 +1,309 @@
+// Public status document maintained by hand in tkslife/status-data.
+// Hosted outside TKS Life so it still loads when the backend is down.
+export const STATUS_URL =
+  "/status.json";
+
+export const COMPONENT_STATES = [
+  "operational",
+  "degraded",
+  "outage",
+  "maintenance",
+  "unknown",
+] as const;
+export const INCIDENT_STAGES = [
+  "investigating",
+  "identified",
+  "restoring",
+  "monitoring",
+  "resolved",
+] as const;
+
+export type ComponentState = (typeof COMPONENT_STATES)[number];
+export type IncidentStage = (typeof INCIDENT_STAGES)[number];
+
+export interface StatusComponent {
+  id: string;
+  name: string;
+  /** Short plain-language explanation of what the feature covers. */
+  description: string | null;
+  state: ComponentState;
+}
+
+export interface IncidentUpdate {
+  publishedAt: string;
+  stage: IncidentStage;
+  impact: string;
+  workaround: string | null;
+  nextUpdateAt: string | null;
+}
+
+export interface StatusIncident {
+  id: string;
+  title: string;
+  componentIds: string[];
+  stage: IncidentStage;
+  updates: IncidentUpdate[];
+  resolvedAt: string | null;
+}
+
+export interface MaintenanceWindow {
+  id: string;
+  title: string;
+  componentIds: string[];
+  startsAt: string;
+  endsAt: string;
+  impact: string;
+}
+
+export interface StatusDocument {
+  components: StatusComponent[];
+  incidents: StatusIncident[];
+  maintenance: MaintenanceWindow[];
+}
+
+export const stateLabels: Record<ComponentState, string> = {
+  operational: "No known issues",
+  degraded: "Degraded",
+  outage: "Outage",
+  maintenance: "Maintenance",
+  unknown: "Unknown",
+};
+
+export const stageLabels: Record<IncidentStage, string> = {
+  investigating: "Investigating",
+  identified: "Identified",
+  restoring: "Restoring",
+  monitoring: "Monitoring",
+  resolved: "Resolved",
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isText = (value: unknown): value is string =>
+  typeof value === "string" && value.trim().length > 0;
+
+const isTime = (value: unknown): value is string =>
+  typeof value === "string" && !Number.isNaN(Date.parse(value));
+
+const isOneOf = <T extends string>(
+  values: readonly T[],
+  value: unknown,
+): value is T => values.includes(value as T);
+
+function list(value: unknown): unknown[] {
+  if (!Array.isArray(value)) throw new Error("Expected a list");
+  return value;
+}
+
+function ids(value: unknown, known: Set<string>): string[] {
+  const values = list(value);
+  if (!values.every((id) => typeof id === "string" && known.has(id))) {
+    throw new Error("Unknown component");
+  }
+  return values as string[];
+}
+
+/**
+ * Turns the raw JSON into a document the page can trust. Any structural
+ * problem rejects the whole document, so the page never shows half-valid
+ * or guessed status.
+ */
+export function parseStatusDocument(raw: unknown): StatusDocument {
+  if (!isRecord(raw) || raw.schema_version !== 1 || !isTime(raw.generated_at)) {
+    throw new Error("Unsupported status document");
+  }
+
+  const components = list(raw.components).map((item) => {
+    if (
+      !isRecord(item) ||
+      !isText(item.id) ||
+      !isText(item.name) ||
+      !(
+        item.description === undefined ||
+        item.description === null ||
+        isText(item.description)
+      ) ||
+      !isOneOf(COMPONENT_STATES, item.state)
+    ) {
+      throw new Error("Invalid component");
+    }
+    return {
+      id: item.id,
+      name: item.name,
+      description: isText(item.description) ? item.description : null,
+      state: item.state,
+    };
+  });
+  const known = new Set(components.map((component) => component.id));
+
+  const incidents = list(raw.incidents).map((item) => {
+    if (
+      !isRecord(item) ||
+      !isText(item.id) ||
+      !isText(item.title) ||
+      !isOneOf(INCIDENT_STAGES, item.stage) ||
+      !(item.resolved_at === null || isTime(item.resolved_at))
+    ) {
+      throw new Error("Invalid incident");
+    }
+    const updates = list(item.updates).map((update) => {
+      if (
+        !isRecord(update) ||
+        !isTime(update.published_at) ||
+        !isOneOf(INCIDENT_STAGES, update.stage) ||
+        !isText(update.impact) ||
+        !(update.workaround === null || isText(update.workaround)) ||
+        !(update.next_update_at === null || isTime(update.next_update_at))
+      ) {
+        throw new Error("Invalid incident update");
+      }
+      return {
+        publishedAt: update.published_at,
+        stage: update.stage,
+        impact: update.impact,
+        workaround: update.workaround,
+        nextUpdateAt: update.next_update_at,
+      };
+    });
+    if (updates.length === 0) throw new Error("Incident without updates");
+    return {
+      id: item.id,
+      title: item.title,
+      componentIds: ids(item.component_ids, known),
+      stage: item.stage,
+      updates: updates.sort(
+        (a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt),
+      ),
+      resolvedAt: item.resolved_at,
+    };
+  });
+
+  const maintenance = list(raw.maintenance).map((item) => {
+    if (
+      !isRecord(item) ||
+      !isText(item.id) ||
+      !isText(item.title) ||
+      !isTime(item.starts_at) ||
+      !isTime(item.ends_at) ||
+      !isText(item.impact)
+    ) {
+      throw new Error("Invalid maintenance window");
+    }
+    return {
+      id: item.id,
+      title: item.title,
+      componentIds: ids(item.component_ids, known),
+      startsAt: item.starts_at,
+      endsAt: item.ends_at,
+      impact: item.impact,
+    };
+  });
+
+  return { components, incidents, maintenance };
+}
+
+export type OverallStatus = "issues" | "maintenance" | "unknown" | "none";
+
+/** One-line summary for the top of the page, worst state first. */
+export function overallStatus(doc: StatusDocument): OverallStatus {
+  const states = doc.components.map((component) => component.state);
+  const hasOpenIncident = doc.incidents.some(
+    (incident) => incident.stage !== "resolved",
+  );
+  if (
+    hasOpenIncident ||
+    states.includes("outage") ||
+    states.includes("degraded")
+  ) {
+    return "issues";
+  }
+  if (states.includes("maintenance")) return "maintenance";
+  if (states.includes("unknown")) return "unknown";
+  return "none";
+}
+
+/** Maintenance that has not ended yet, soonest first. */
+export function upcomingMaintenance(
+  doc: StatusDocument,
+  now: Date = new Date(),
+): MaintenanceWindow[] {
+  return doc.maintenance
+    .filter((window) => Date.parse(window.endsAt) > now.getTime())
+    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+}
+
+export const RECENT_DAYS = 30;
+
+/** Resolved incidents from the last RECENT_DAYS days, newest first. */
+export function recentlyResolved(
+  doc: StatusDocument,
+  now: Date = new Date(),
+): StatusIncident[] {
+  const since = now.getTime() - RECENT_DAYS * 24 * 60 * 60 * 1000;
+  return doc.incidents
+    .filter(
+      (incident) =>
+        incident.stage === "resolved" &&
+        incident.resolvedAt !== null &&
+        Date.parse(incident.resolvedAt) >= since,
+    )
+    .sort((a, b) => Date.parse(b.resolvedAt!) - Date.parse(a.resolvedAt!));
+}
+
+/** The open incident affecting a feature, if any, so its row can link to it. */
+export function openIncidentFor(
+  doc: StatusDocument,
+  componentId: string,
+): StatusIncident | undefined {
+  return doc.incidents.find(
+    (incident) =>
+      incident.stage !== "resolved" &&
+      incident.componentIds.includes(componentId),
+  );
+}
+
+/** "just now", "1 minute ago", "12 minutes ago", "2 hours ago". */
+export function formatCheckedAgo(checkedAt: Date, now: Date): string {
+  const minutes = Math.floor((now.getTime() - checkedAt.getTime()) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+}
+
+/** Formats a UTC time in the reader's own time zone, with the zone shown. */
+export function formatStatusTime(
+  value: string,
+  locale?: string,
+  timeZone?: string,
+): string {
+  // dateStyle/timeStyle cannot be combined with timeZoneName, so list fields.
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+    timeZone,
+  }).format(new Date(value));
+}
+
+export async function fetchStatusDocument(
+  fetcher: typeof fetch = fetch,
+): Promise<StatusDocument> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const response = await fetcher(STATUS_URL, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (!response.ok)
+      throw new Error(`Status request failed: ${response.status}`);
+    return parseStatusDocument(await response.json());
+  } finally {
+    clearTimeout(timeout);
+  }
+}

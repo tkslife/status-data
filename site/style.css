@@ -1,0 +1,36 @@
+@font-face {
+  font-family: Geist;
+  src: url('/assets/Geist-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Geist;
+  src: url('/assets/Geist-Medium.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: Geist;
+  src: url('/assets/Geist-SemiBold.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  :root {
+    color-scheme: light;
+    --background: 0 0% 100%;
+    --foreground: 255 42% 19%;
+    --muted: 210 40% 96.1%;
+    --border: 214.3 31.8% 91.4%;
+    --radius: 0.5rem;
+  }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; font-family: Geist, sans-serif; }
+}
