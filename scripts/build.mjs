@@ -53,4 +53,5 @@ const html = (await readFile("site/index.html", "utf8"))
 await writeFile("dist/index.html", html);
 await cp("node_modules/geist/LICENSE.TXT", "dist/assets/Geist-LICENSE.txt");
 await cp("status.json", "dist/status.json");
+await cp("dev-status.json", "dist/dev-status.json");
 await writeFile("dist/robots.txt", "User-agent: *\nDisallow: /\n");

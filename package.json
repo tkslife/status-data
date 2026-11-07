@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "validate": "node scripts/validate.mjs status.json",
-    "test": "node --test scripts/status.test.mjs",
+    "validate": "node scripts/validate.mjs status.json && node scripts/validate.mjs dev-status.json",
+    "test": "node --test scripts/*.test.mjs",
     "build": "npm run validate && node scripts/build.mjs"
   },
   "dependencies": {

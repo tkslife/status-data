@@ -1,0 +1,92 @@
+name: Publish or update a service notice
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Where to publish (Dev practice does not affect students)
+        type: choice
+        options: [Dev practice, Production]
+        default: Dev practice
+      id:
+        description: Reference, for example login-delay (reuse it to update the same notice)
+        required: true
+        type: string
+      title:
+        description: Public title
+        required: true
+        type: string
+      components:
+        description: Affected service
+        type: choice
+        options: [all, sign-in, braindates, explore-lessons, projects-focus, notifications, ai-features]
+      message:
+        description: Public message, up to 400 characters. No private details.
+        required: true
+        type: string
+      publish:
+        description: Publish this notice (leave unchecked to preview only)
+        type: boolean
+        default: false
+      stage:
+        description: Incident stage (Resolved closes an existing notice)
+        type: choice
+        options: [investigating, identified, restoring, monitoring, resolved]
+      severity:
+        description: Impact on the selected service
+        type: choice
+        options: [degraded, outage]
+
+permissions:
+  contents: read
+concurrency:
+  group: status-operator
+  cancel-in-progress: false
+jobs:
+  update:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Require a fresh publication request
+        env:
+          PUBLISH: ${{ inputs.publish }}
+          ATTEMPT: ${{ github.run_attempt }}
+        run: test "$PUBLISH" != true || test "$ATTEMPT" = 1
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare notice
+        id: notice
+        run: node scripts/operator-update.mjs incident
+      - name: Validate notice
+        env:
+          STATUS_FILE: ${{ steps.notice.outputs.file }}
+        run: node scripts/validate.mjs "$STATUS_FILE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: notice-preview
+          path: ${{ steps.notice.outputs.file }}
+          retention-days: 7
+      - name: Save approved public notice
+        if: inputs.publish
+        env:
+          STATUS_FILE: ${{ steps.notice.outputs.file }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "$STATUS_FILE"
+          git commit -m "TKS-442: update approved service notice"
+          git push origin HEAD:main
+      - name: Publish validated site
+        if: inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run validate.yml --ref main
+          echo 'Publication queued. Check the Check status file workflow, then the public page. Allow for the GitHub Pages cache.' >> "$GITHUB_STEP_SUMMARY"

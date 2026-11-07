@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-07T01:55:00Z",
+  "history_started_at": "2026-11-07T01:55:00Z",
+  "components": [
+    {
+      "id": "sign-in",
+      "name": "Signing in",
+      "description": "Account sign-in and access",
+      "state": "operational"
+    },
+    {
+      "id": "braindates",
+      "name": "Braindates",
+      "description": "Braindate discovery and booking",
+      "state": "operational"
+    },
+    {
+      "id": "explore-lessons",
+      "name": "Explore and lessons",
+      "description": "Access to modules, lessons and learning resources",
+      "state": "operational"
+    },
+    {
+      "id": "projects-focus",
+      "name": "Projects and Focus",
+      "description": "Project work, Focus activities and progress updates",
+      "state": "operational"
+    },
+    {
+      "id": "notifications",
+      "name": "Notifications",
+      "description": "Delivery of notifications and reminders",
+      "state": "operational"
+    },
+    {
+      "id": "ai-features",
+      "name": "Activate Coach and AI features",
+      "description": "Activate Coach responses and AI-assisted profile suggestions",
+      "state": "operational"
+    }
+  ],
+  "incidents": [],
+  "maintenance": []
+}

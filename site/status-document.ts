@@ -57,6 +57,7 @@ export interface MaintenanceWindow {
 }
 
 export interface StatusDocument {
+  notice?: { id: string; message: string; publishedAt: string } | null;
   components: StatusComponent[];
   incidents: StatusIncident[];
   maintenance: MaintenanceWindow[];
@@ -183,7 +184,7 @@ export function parseStatusDocument(raw: unknown): StatusDocument {
     };
   });
 
-  const maintenance = list(raw.maintenance).map((item) => {
+  const maintenance = list(raw.maintenance).filter(item => !isRecord(item) || !item.cancelled_at).map((item) => {
     if (
       !isRecord(item) ||
       !isText(item.id) ||
@@ -199,7 +200,7 @@ export function parseStatusDocument(raw: unknown): StatusDocument {
       title: item.title,
       componentIds: ids(item.component_ids, known),
       startsAt: item.starts_at,
-      endsAt: item.ends_at,
+      endsAt: isTime(item.completed_at) ? item.completed_at : item.ends_at,
       impact: item.impact,
     };
   });
@@ -207,7 +208,12 @@ export function parseStatusDocument(raw: unknown): StatusDocument {
   if (raw.history_started_at !== undefined && !isTime(raw.history_started_at)) {
     throw new Error("Invalid history start");
   }
-  return { components, incidents, maintenance, historyStartedAt: raw.history_started_at ?? null };
+  let notice = null;
+  if (raw.notice != null) {
+    if (!isRecord(raw.notice) || !isText(raw.notice.id) || !isText(raw.notice.message) || !isTime(raw.notice.published_at)) throw new Error("Invalid notice");
+    notice = { id: raw.notice.id, message: raw.notice.message, publishedAt: raw.notice.published_at };
+  }
+  return { components, incidents, maintenance, notice, historyStartedAt: raw.history_started_at ?? null };
 }
 
 export type OverallStatus = "issues" | "maintenance" | "unknown" | "none";

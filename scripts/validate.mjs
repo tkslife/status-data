@@ -55,7 +55,12 @@ try {
   process.exit(1);
 }
 
-if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents", "maintenance"], "status", ["history_started_at"])) {
+if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents", "maintenance"], "status", ["history_started_at", "notice"])) {
+  if (doc.notice != null && exactKeys(doc.notice, ["id", "message", "published_at"], "notice")) {
+    if (!ID.test(doc.notice.id ?? "")) fail("notice.id must be lowercase words joined by hyphens");
+    text(doc.notice.message, "notice.message");
+    time(doc.notice.published_at, "notice.published_at");
+  }
   if (doc.schema_version !== 1) fail("schema_version must be 1");
   time(doc.generated_at, "generated_at");
   if ("history_started_at" in doc) {
@@ -87,7 +92,8 @@ if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents",
   const incidentIds = new Set();
   list(doc.incidents, "incidents").forEach((incident, i) => {
     const where = `incidents[${i}]`;
-    if (!exactKeys(incident, ["id", "title", "component_ids", "stage", "updates", "resolved_at"], where, ["severity"])) return;
+    if (!exactKeys(incident, ["id", "title", "component_ids", "stage", "updates", "resolved_at"], where, ["severity", "current_severity"])) return;
+    if ("current_severity" in incident && !["degraded", "outage"].includes(incident.current_severity)) fail(`${where}.current_severity must be degraded or outage`);
     if ("severity" in incident && !["degraded", "outage"].includes(incident.severity)) fail(`${where}.severity must be degraded or outage`);
     if (!ID.test(incident.id ?? "")) fail(`${where}.id must be lowercase words joined by hyphens`);
     if (incidentIds.has(incident.id)) fail(`${where}.id "${incident.id}" is used twice`);
@@ -115,7 +121,11 @@ if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents",
 
   list(doc.maintenance, "maintenance").forEach((window, i) => {
     const where = `maintenance[${i}]`;
-    if (!exactKeys(window, ["id", "title", "component_ids", "starts_at", "ends_at", "impact"], where)) return;
+    if (!exactKeys(window, ["id", "title", "component_ids", "starts_at", "ends_at", "impact"], where, ["cancelled_at", "completed_at"])) return;
+    for (const key of ["cancelled_at", "completed_at"]) if (key in window) time(window[key], `${where}.${key}`);
+    if (window.cancelled_at && window.completed_at) fail(`${where} cannot be cancelled and completed`);
+    if (window.cancelled_at && Date.parse(window.cancelled_at) >= Date.parse(window.starts_at)) fail(`${where} cancellation must precede start`);
+    if (window.completed_at && (Date.parse(window.completed_at) < Date.parse(window.starts_at) || Date.parse(window.completed_at) > Date.parse(window.ends_at))) fail(`${where} completion must be within its window`);
     if (!ID.test(window.id ?? "")) fail(`${where}.id must be lowercase words joined by hyphens`);
     text(window.title, `${where}.title`, { max: 120 });
     checkComponentIds(window.component_ids, `${where}.component_ids`);
