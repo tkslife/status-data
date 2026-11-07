@@ -46,8 +46,9 @@ export default function StatusHistory({ doc, now, onIncident }: {
           setSelectedDate(days[next].date);
           (event.currentTarget.parentElement?.children[next] as HTMLElement)?.focus();
         }}
-        className="group flex min-w-0 flex-col items-stretch focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-1">
+        className="group flex min-w-0 flex-col items-stretch pb-1 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-1">
         <span aria-hidden="true" className={`h-8 rounded-sm ${colours[day.state]} group-hover:opacity-70`} />
+        <span aria-hidden="true" className={`mt-1 h-1 rounded-sm ${day === selected ? "bg-foreground" : "bg-transparent"}`} />
       </button>)}
     </div>
     <div className="mt-2 flex justify-between text-xs text-gray-600"><span>{formatHistoryDate(days[0].date)}</span><span>Today</span></div>
