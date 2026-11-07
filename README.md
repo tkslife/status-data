@@ -2,7 +2,7 @@
 
 The public status site at `https://status.tks.life/` is published by GitHub Pages from this repository. It contains only approved public wording and static page assets. Nothing private belongs here. Engineering owner: [Gabriel Dalton](https://github.com/gabrieldaltontks).
 
-During the application cutover, older `/status` clients also read the raw GitHub `status.json`. Keep this repository public; free GitHub Pages hosting also relies on its public visibility.
+Production `/status` redirects to the independent domain. Older, already-open application clients may still read the raw GitHub `status.json`. Keep this repository public; free GitHub Pages hosting relies on its public visibility.
 
 ## Update the status
 
@@ -63,12 +63,12 @@ The daily timeline is calculated from these records in the browser, without a da
 node scripts/validate.mjs status.json
 ```
 
-## Independent site preparation
+## Hosting and publication
 
 The static site and GitHub Pages publishing workflow for [TKS-439](https://tkslife.atlassian.net/browse/TKS-439) are described in [HOSTING.md](HOSTING.md). Run `npm ci`, `npm test`, and `npm run build` to produce `dist/`. GitHub Pages publishes validated builds from `main`; custom-domain and application cutover verification are tracked in the ticket.
 
 ## Related
 
 - [tks-life-status](https://github.com/tkslife/tks-life-status): the status page design, data contract and SOP. The long-term public page is `status.tks.life`; this file can feed it too.
-- [tks-life-frontend](https://github.com/tkslife/tks-life-frontend): the `/status` page that reads this file.
+- [tks-life-frontend](https://github.com/tkslife/tks-life-frontend): application status links and the permanent `/status` redirect.
 - Backlog ticket [OPS03](https://github.com/tkslife/tks-life-backlog/blob/main/items/OPS03.md).
