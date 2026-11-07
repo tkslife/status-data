@@ -55,9 +55,13 @@ try {
   process.exit(1);
 }
 
-if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents", "maintenance"], "status")) {
+if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents", "maintenance"], "status", ["history_started_at"])) {
   if (doc.schema_version !== 1) fail("schema_version must be 1");
   time(doc.generated_at, "generated_at");
+  if ("history_started_at" in doc) {
+    time(doc.history_started_at, "history_started_at");
+    if (Date.parse(doc.history_started_at) > Date.parse(doc.generated_at)) fail("history_started_at must not be after generated_at");
+  }
 
   const componentIds = new Set();
   list(doc.components, "components").forEach((c, i) => {
@@ -83,7 +87,8 @@ if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents",
   const incidentIds = new Set();
   list(doc.incidents, "incidents").forEach((incident, i) => {
     const where = `incidents[${i}]`;
-    if (!exactKeys(incident, ["id", "title", "component_ids", "stage", "updates", "resolved_at"], where)) return;
+    if (!exactKeys(incident, ["id", "title", "component_ids", "stage", "updates", "resolved_at"], where, ["severity"])) return;
+    if ("severity" in incident && !["degraded", "outage"].includes(incident.severity)) fail(`${where}.severity must be degraded or outage`);
     if (!ID.test(incident.id ?? "")) fail(`${where}.id must be lowercase words joined by hyphens`);
     if (incidentIds.has(incident.id)) fail(`${where}.id "${incident.id}" is used twice`);
     incidentIds.add(incident.id);
@@ -102,6 +107,7 @@ if (exactKeys(doc, ["schema_version", "generated_at", "components", "incidents",
       time(update.next_update_at, `${at}.next_update_at`, { nullable: true });
     });
     time(incident.resolved_at, `${where}.resolved_at`, { nullable: true });
+    if (incident.resolved_at && updates.some(update => Date.parse(update.published_at) > Date.parse(incident.resolved_at))) fail(`${where}.resolved_at must not precede an update`);
     if ((incident.stage === "resolved") !== (incident.resolved_at !== null)) {
       fail(`${where} must have resolved_at set exactly when stage is resolved`);
     }

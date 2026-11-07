@@ -44,6 +44,7 @@ export interface StatusIncident {
   stage: IncidentStage;
   updates: IncidentUpdate[];
   resolvedAt: string | null;
+  severity: "degraded" | "outage" | null;
 }
 
 export interface MaintenanceWindow {
@@ -59,6 +60,7 @@ export interface StatusDocument {
   components: StatusComponent[];
   incidents: StatusIncident[];
   maintenance: MaintenanceWindow[];
+  historyStartedAt: string | null;
 }
 
 export const stateLabels: Record<ComponentState, string> = {
@@ -144,6 +146,7 @@ export function parseStatusDocument(raw: unknown): StatusDocument {
       !isText(item.title) ||
       !isOneOf(INCIDENT_STAGES, item.stage) ||
       !(item.resolved_at === null || isTime(item.resolved_at))
+      || !(item.severity === undefined || item.severity === "degraded" || item.severity === "outage")
     ) {
       throw new Error("Invalid incident");
     }
@@ -176,6 +179,7 @@ export function parseStatusDocument(raw: unknown): StatusDocument {
         (a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt),
       ),
       resolvedAt: item.resolved_at,
+      severity: item.severity ?? null,
     };
   });
 
@@ -200,7 +204,10 @@ export function parseStatusDocument(raw: unknown): StatusDocument {
     };
   });
 
-  return { components, incidents, maintenance };
+  if (raw.history_started_at !== undefined && !isTime(raw.history_started_at)) {
+    throw new Error("Invalid history start");
+  }
+  return { components, incidents, maintenance, historyStartedAt: raw.history_started_at ?? null };
 }
 
 export type OverallStatus = "issues" | "maintenance" | "unknown" | "none";
@@ -233,14 +240,64 @@ export function upcomingMaintenance(
     .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
 }
 
-export const RECENT_DAYS = 30;
+export const RECENT_DAYS = 90;
+
+const DAY_MS = 86_400_000;
+export const historyLabels: Record<ComponentState, string> = {
+  operational: "No incidents reported",
+  degraded: "Incident reported",
+  outage: "Outage reported",
+  maintenance: "Maintenance",
+  unknown: "No records",
+};
+
+export interface HistoryDay {
+  date: string;
+  state: ComponentState;
+  incidents: StatusIncident[];
+  maintenance: MaintenanceWindow[];
+  coverage: "full" | "partial" | "none";
+}
+
+/** Reported incident history, not a measured uptime percentage. Dates use UTC. */
+export function statusHistory(doc: StatusDocument, now = new Date()): HistoryDay[] {
+  const today = Date.parse(now.toISOString().slice(0, 10));
+  const tracking = doc.historyStartedAt ? Date.parse(doc.historyStartedAt) : Infinity;
+  return Array.from({ length: RECENT_DAYS }, (_, index) => {
+    const start = today - (RECENT_DAYS - 1 - index) * DAY_MS;
+    const end = Math.min(start + DAY_MS, now.getTime() + 1);
+    const incidents = doc.incidents.filter(incident => {
+      const began = Math.min(...incident.updates.map(update => Date.parse(update.publishedAt)));
+      const ended = incident.resolvedAt ? Date.parse(incident.resolvedAt) : now.getTime() + 1;
+      return began < end && ended > start;
+    });
+    const maintenance = doc.maintenance.filter(window => Date.parse(window.startsAt) < end && Date.parse(window.endsAt) > start);
+    const coverage = start >= tracking ? "full" : tracking < end ? "partial" : "none";
+    let state: ComponentState = coverage !== "none" ? "operational" : "unknown";
+    if (maintenance.length) state = "maintenance";
+    if (incidents.length) state = incidents.some(incident => incident.severity === "outage") ? "outage" : "degraded";
+    // Today's known problems remain visible even before an incident is written.
+    if (start === today) {
+      const states = doc.components.map(component => component.state);
+      if (states.includes("outage")) state = "outage";
+      else if (state !== "outage" && states.includes("degraded")) state = "degraded";
+      else if ((state === "operational" || state === "unknown") && states.includes("maintenance")) state = "maintenance";
+      else if (!incidents.length && !maintenance.length && states.includes("unknown")) state = "unknown";
+    }
+    return { date: new Date(start).toISOString().slice(0, 10), state, incidents, maintenance, coverage };
+  });
+}
+
+export function formatHistoryDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(value));
+}
 
 /** Resolved incidents from the last RECENT_DAYS days, newest first. */
 export function recentlyResolved(
   doc: StatusDocument,
   now: Date = new Date(),
 ): StatusIncident[] {
-  const since = now.getTime() - RECENT_DAYS * 24 * 60 * 60 * 1000;
+  const since = Date.parse(now.toISOString().slice(0, 10)) - (RECENT_DAYS - 1) * DAY_MS;
   return doc.incidents
     .filter(
       (incident) =>

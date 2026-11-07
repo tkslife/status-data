@@ -7,11 +7,11 @@ During the application cutover, older `/status` clients also read the raw GitHub
 ## Update the status
 
 1. Open [`status.json`](status.json) on GitHub and click the pencil to edit.
-2. Change the affected component's `state`, add or update an incident, and set `generated_at` to the current UTC time.
+2. Change the affected component's `state`, add or update an incident, and set `generated_at` to the current UTC time. Record each disruption as an incident and each maintenance period as a window: a component state is only a current snapshot and cannot preserve yesterday's history by itself.
 3. Commit to `main`. The **Check status file** action validates, tests, builds and publishes the complete site to GitHub Pages. Deployment and CDN propagation take time; verify the live data before announcing an update.
 4. Check that validation and publication passed. Invalid data blocks publication, leaving the last valid Pages site available. Fix the source promptly; legacy `/status` clients read the raw file directly and can show a load error until it is corrected.
 
-Student and staff wording is reviewed by Lyn, and external or security wording by Andre, under the [status notices SOP](https://github.com/tkslife/tks-life-status/blob/main/docs/status-and-maintenance-sop.md). Use its copy templates. All times are UTC; the page shows them in the reader's local time.
+Student and staff wording is reviewed by Lyn, and external or security wording by Andre, under the [status notices SOP](https://github.com/tkslife/tks-life-status/blob/main/docs/status-and-maintenance-sop.md). Use its copy templates. Store all times in UTC. Incident updates show the reader's local time; daily history consistently uses UTC.
 
 ## What can go in the file
 
@@ -23,6 +23,8 @@ The format is a subset of the public allowlist in the [status data contract](htt
 | `components[].state` | `operational` (shown as "No known issues"), `degraded`, `outage`, `maintenance`, `unknown` |
 | `incidents[].stage` and `updates[].stage` | `investigating`, `identified`, `restoring`, `monitoring`, `resolved` |
 | `incidents[].resolved_at` | `null` until resolved; set exactly when `stage` is `resolved` |
+| `incidents[].severity` | `degraded` for a partial disruption or `outage` for an outage; optional for legacy records whose severity was not recorded |
+| `history_started_at` | Optional UTC start of incident tracking; never backdate it to imply coverage that did not exist |
 | `maintenance[]` | Planned windows with `starts_at`, `ends_at` and `impact`; a future window does not change a component's state |
 
 Version 1 adds a one-line component `description`, a short `title` to incidents and maintenance windows and a `stage` to each incident update, so each update shows where things stood at the time.
@@ -37,6 +39,7 @@ Never put student names or details, staff contact details, links, internal hostn
   "title": "Activate Coach not responding",
   "component_ids": ["ai-features"],
   "stage": "investigating",
+  "severity": "degraded",
   "updates": [
     {
       "published_at": "2026-10-23T22:30:00Z",
@@ -50,7 +53,9 @@ Never put student names or details, staff contact details, links, internal hostn
 }
 ```
 
-Add the newest update first. Keep resolved incidents in the list for a while so people can see what happened.
+Add the newest update first. Retain resolved incidents and ended maintenance windows until they no longer overlap the last 90 UTC calendar days, including today. Never remove an open incident. Removing records early would erase their history. Git history preserves older records after they leave the public window.
+
+The daily timeline is calculated from these records in the browser, without a database, collector or daily job. An incident spans its earliest update until `resolved_at`, excluding the resolution instant. A resolution exactly at midnight does not colour the next day. Red means an outage was reported, orange means another incident was reported, blue means maintenance and green means no incidents were reported during tracking. These are reported events, not measured uptime. Before tracking began, dates without records remain grey; legacy incidents without severity are explicitly labelled. Keep `history_started_at` unchanged on routine updates and advance `generated_at` when publishing changes.
 
 ## Check locally
 
