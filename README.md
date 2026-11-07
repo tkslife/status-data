@@ -1,16 +1,15 @@
 # TKS Life status data
 
-> [!CAUTION]
-> 🔴 **Production.** `status.json` is read live by the public TKS Life `/status` page. Whatever you commit to `main` is shown to students and families within a few minutes. Contact for production changes: [Gabriel](https://github.com/gabrieldaltontks).
+The public status site at `https://status.tks.life/` is published by GitHub Pages from this repository. It contains only approved public wording and static page assets. Nothing private belongs here. Engineering owner: [Gabriel Dalton](https://github.com/gabrieldaltontks).
 
-This repository is public on purpose. It holds only the approved public wording for the status page, so the page can be updated during an incident without a frontend release and without depending on the TKS Life backend. Nothing private belongs here.
+During the application cutover, older `/status` clients also read the raw GitHub `status.json`. Keep this repository public; free GitHub Pages hosting also relies on its public visibility.
 
 ## Update the status
 
 1. Open [`status.json`](status.json) on GitHub and click the pencil to edit.
 2. Change the affected component's `state`, add or update an incident, and set `generated_at` to the current UTC time.
-3. Commit to `main`. The page picks it up within about five minutes (GitHub caches the raw file).
-4. Check that the **Check status file** action passed. If the file is invalid, the page shows "We couldn't load the latest status" instead of old or broken information, so fix it straight away.
+3. Commit to `main`. The **Check status file** action validates, tests, builds and publishes the complete site to GitHub Pages. Deployment and CDN propagation take time; verify the live data before announcing an update.
+4. Check that validation and publication passed. Invalid data blocks publication, leaving the last valid Pages site available. Fix the source promptly; legacy `/status` clients read the raw file directly and can show a load error until it is corrected.
 
 Student and staff wording is reviewed by Lyn, and external or security wording by Andre, under the [status notices SOP](https://github.com/tkslife/tks-life-status/blob/main/docs/status-and-maintenance-sop.md). Use its copy templates. All times are UTC; the page shows them in the reader's local time.
 
@@ -61,7 +60,7 @@ node scripts/validate.mjs status.json
 
 ## Independent site preparation
 
-The static site and gated publishing workflow for [TKS-439](https://tkslife.atlassian.net/browse/TKS-439) are described in [HOSTING.md](HOSTING.md). Run `npm ci`, `npm test`, and `npm run build` to produce `dist/`. Hosting and DNS are pending; this does not change the live `/status` page. Publishing stays disabled until the documented cost and infrastructure checks are cleared.
+The static site and GitHub Pages publishing workflow for [TKS-439](https://tkslife.atlassian.net/browse/TKS-439) are described in [HOSTING.md](HOSTING.md). Run `npm ci`, `npm test`, and `npm run build` to produce `dist/`. GitHub Pages publishes validated builds from `main`; custom-domain and application cutover verification are tracked in the ticket.
 
 ## Related
 

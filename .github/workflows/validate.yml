@@ -26,46 +26,29 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm test
       - run: npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-pages-artifact@v4
         with:
-          name: public-status
           path: dist/
-          retention-days: 7
 
   publish:
     needs: validate
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.STATUS_PUBLISH_ENABLED == 'true'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    environment: status-production
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     permissions:
       contents: read
+      pages: write
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: public-status
-          path: dist/
       - name: Verify this is still the current main revision
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           current=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
           test "$current" = "$GITHUB_SHA"
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.STATUS_PUBLISH_ROLE_ARN }}
-          aws-region: ${{ vars.STATUS_AWS_REGION }}
-      - name: Publish validated public files
-        env:
-          STATUS_BUCKET: ${{ vars.STATUS_BUCKET }}
-          STATUS_DISTRIBUTION: ${{ vars.STATUS_DISTRIBUTION_ID }}
-        run: |
-          set -euo pipefail
-          test -n "$STATUS_BUCKET"
-          test -n "$STATUS_DISTRIBUTION"
-          aws s3 sync dist/assets/ "s3://$STATUS_BUCKET/assets/" --cache-control 'public,max-age=86400' --only-show-errors
-          aws s3 cp dist/robots.txt "s3://$STATUS_BUCKET/robots.txt" --cache-control 'public,max-age=300' --content-type 'text/plain; charset=utf-8' --only-show-errors
-          aws s3 cp dist/index.html "s3://$STATUS_BUCKET/index.html" --cache-control 'public,max-age=15,must-revalidate' --content-type 'text/html; charset=utf-8' --only-show-errors
-          aws s3 cp dist/status.json "s3://$STATUS_BUCKET/status.json" --cache-control 'public,max-age=15,must-revalidate' --content-type 'application/json; charset=utf-8' --only-show-errors
-          aws cloudfront create-invalidation --distribution-id "$STATUS_DISTRIBUTION" --paths / /index.html /status.json /robots.txt
+      - name: Deploy validated static site
+        id: deployment
+        uses: actions/deploy-pages@v4
