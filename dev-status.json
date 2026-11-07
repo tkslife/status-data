@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-07T01:55:00Z",
+  "generated_at": "2026-11-07T03:38:31Z",
   "history_started_at": "2026-11-07T01:55:00Z",
   "components": [
     {
@@ -41,5 +41,10 @@
     }
   ],
   "incidents": [],
-  "maintenance": []
+  "maintenance": [],
+  "notice": {
+    "id": "dev-controls-check",
+    "message": "Dev verification: service notice controls are being tested.",
+    "published_at": "2026-11-07T03:38:31Z"
+  }
 }
