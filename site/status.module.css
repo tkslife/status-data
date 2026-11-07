@@ -1,0 +1,11 @@
+.refreshing {
+  animation: status-refresh 800ms linear infinite;
+}
+
+@keyframes status-refresh {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refreshing { animation: none; }
+}

@@ -59,6 +59,10 @@ Add the newest update first. Keep resolved incidents in the list for a while so 
 node scripts/validate.mjs status.json
 ```
 
+## Independent site preparation
+
+The static site and gated publishing workflow for [TKS-439](https://tkslife.atlassian.net/browse/TKS-439) are described in [HOSTING.md](HOSTING.md). Run `npm ci`, `npm test`, and `npm run build` to produce `dist/`. Hosting and DNS are pending; this does not change the live `/status` page. Publishing stays disabled until the documented cost and infrastructure checks are cleared.
+
 ## Related
 
 - [tks-life-status](https://github.com/tkslife/tks-life-status): the status page design, data contract and SOP. The long-term public page is `status.tks.life`; this file can feed it too.
