@@ -339,6 +339,11 @@ const StatusPage = () => {
             )}
           </section>
 
+          {doc?.notice && <section className="mt-6 rounded-lg border p-4" aria-label="Service notice">
+            <p>{doc.notice.message}</p>
+            <p className="mt-2 text-sm text-gray-600">Updated {formatStatusTime(doc.notice.publishedAt)}</p>
+          </section>}
+
           {openIncidents && openIncidents.length > 0 && (
             <section className="mt-10" aria-labelledby="current-heading">
               <h2
