@@ -25,11 +25,8 @@ export default function StatusHistory({ doc, now, onIncident }: {
   const control = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border px-2 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-40";
 
   return <div className="mt-4 min-w-0 rounded-lg border p-4 sm:p-6">
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-gray-600">Last 90 days · UTC</p>
-        <button type="button" className="min-h-11 text-sm underline underline-offset-2 disabled:text-gray-600 disabled:no-underline focus-visible:outline focus-visible:outline-2" disabled={selectedIndex === days.length - 1} onClick={() => setSelectedDate(days[days.length - 1].date)}>Today</button>
-      </div>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-gray-600">Last 90 days · UTC</p>
       <div className="flex w-full items-center gap-2 sm:w-auto sm:self-start">
         <button type="button" className={control} aria-label="Previous day" disabled={selectedIndex === 0} onClick={() => move(-1)}><ChevronLeft size={18} aria-hidden="true" /></button>
         <HistoryCalendar min={days[0].date} max={days[days.length - 1].date} value={selected.date} onChange={setSelectedDate} />
