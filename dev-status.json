@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-07T03:57:24Z",
+  "generated_at": "2026-11-07T03:58:08Z",
   "history_started_at": "2026-11-07T01:55:00Z",
   "components": [
     {
       "id": "sign-in",
       "name": "Signing in",
       "description": "Account sign-in and access",
-      "state": "degraded"
+      "state": "operational"
     },
     {
       "id": "braindates",
@@ -47,9 +47,16 @@
       "component_ids": [
         "sign-in"
       ],
-      "stage": "investigating",
+      "stage": "resolved",
       "severity": "degraded",
       "updates": [
+        {
+          "published_at": "2026-11-07T03:58:08Z",
+          "stage": "resolved",
+          "impact": "Dev verification complete. Sign-in is operational.",
+          "workaround": null,
+          "next_update_at": null
+        },
         {
           "published_at": "2026-11-07T03:54:25Z",
           "stage": "investigating",
@@ -58,7 +65,7 @@
           "next_update_at": null
         }
       ],
-      "resolved_at": null,
+      "resolved_at": "2026-11-07T03:58:08Z",
       "current_severity": "degraded"
     }
   ],
