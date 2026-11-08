@@ -16,6 +16,6 @@
   "devDependencies": {
     "esbuild": "0.25.12",
     "tailwindcss": "3.4.19",
-    "postcss": "8.5.6"
+    "postcss": "8.5.32"
   }
 }
