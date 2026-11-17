@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-07T19:14:10Z",
+  "generated_at": "2026-11-17T06:30:15Z",
   "history_started_at": "2026-10-25T08:15:31Z",
   "components": [
     {
@@ -74,5 +74,21 @@
       "resolved_at": "2026-10-25T08:15:31Z"
     }
   ],
-  "maintenance": []
+  "maintenance": [
+    {
+      "id": "2026-11-22-tks-life-update",
+      "title": "Scheduled TKS Life maintenance",
+      "component_ids": [
+        "sign-in",
+        "braindates",
+        "explore-lessons",
+        "projects-focus",
+        "notifications",
+        "ai-features"
+      ],
+      "starts_at": "2026-11-22T21:00:00Z",
+      "ends_at": "2026-11-22T23:00:00Z",
+      "impact": "TKS Life may be unavailable for up to two hours on November 22, from 2 to 4 p.m. Pacific Time (UTC-7), while an update is installed. An update will be posted here when maintenance is complete."
+    }
+  ]
 }
